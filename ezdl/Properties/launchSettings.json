@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ezdl": {
+      "commandName": "Project",
+      "commandLineArgs": "-fmt mp4 -res 720 https://v.redd.it/fl2kxscibra91"
+    }
+  }
+}

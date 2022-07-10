@@ -2,6 +2,7 @@
 using NLog.Layouts;
 using System;
 using System.IO;
+using System.Web;
 
 namespace ezdl
 {
@@ -11,6 +12,11 @@ namespace ezdl
         {
             //no config file (yet) but grab app folder to configure log
             string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ezdl");
+
+            if(!Directory.Exists(dataPath))
+            {
+                Directory.CreateDirectory(dataPath);
+            }
 
             string logFilePath = Path.Combine(dataPath, "ezdl.log");
             NLog.LogManager.Setup().LoadConfiguration(builder => {
@@ -26,8 +32,11 @@ namespace ezdl
 
             logger.Info($"ezdl started in {currentPath} with args {string.Join(',', args)}");
 
-            Directory.Delete(tempPath, true);
-            Directory.CreateDirectory(tempPath);
+            if(Directory.Exists(tempPath))
+            {
+                Directory.Delete(tempPath, true);
+                Directory.CreateDirectory(tempPath);
+            }            
 
             //parse args
             int resolution = 1080;
@@ -44,7 +53,11 @@ namespace ezdl
             int fmtArgIdx = Array.IndexOf(args, "-fmt");
             if (fmtArgIdx >= 0)
             {
-                preferredFormat = (PreferredFormat)Enum.Parse(typeof(PreferredFormat), args[fmtArgIdx + 1]);
+                string fmtString = args[fmtArgIdx + 1];
+                if(fmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
+                {
+                    preferredFormat = PreferredFormat.Mp4H264;
+                }
             }
 
             //ugly way of trying paths for cookies
@@ -82,7 +95,35 @@ namespace ezdl
 
             logger.Info("URL: " + urlString);
 
-            //TODO get ID and site
+            string id = null;
+            Site site = Site.Unknown;
+            if(uri.Host.Contains("youtube", StringComparison.OrdinalIgnoreCase) || uri.Host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.YouTube;
+                var qs = HttpUtility.ParseQueryString(uri.Query);
+                id = qs["v"];
+            }
+            else if(uri.Host.Contains("twitter", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.Twitter;
+                var statusSegmentIdx = Array.IndexOf(uri.Segments, "status/");
+                id = uri.Segments[statusSegmentIdx + 1].TrimEnd('/');
+            }
+            else if (uri.Host.Contains("imgur", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.Imgur;
+                if(uri.Segments.Length > 0)
+                {
+                    id = uri.Segments[uri.Segments.Length - 1];
+                }
+            }
+            else if(uri.Host.Contains("reddit", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith("redd.it", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.Reddit;
+            }
+
+            logger.Info("Site: " + site);
+            logger.Info("ID: " + (id == null ? "unknown" : id));
 
             var downloader = new Downloader(new DownloaderConfig()
             {
@@ -93,10 +134,13 @@ namespace ezdl
                 TempFolder = tempPath,
                 OutputFormat = OutputFormat.Mkv,
                 MaxResolution = resolution,
-                PreferredFormat = preferredFormat
-
+                PreferredFormat = preferredFormat,
+                Site = site,
+                Id = id
             });
-            downloader.Download();
+            string finalPath = downloader.Download();
+
+            logger.Info("ezdl done!");
         }
         
     }

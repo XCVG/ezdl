@@ -19,9 +19,13 @@ namespace ezdl
             Logger = NLog.LogManager.GetCurrentClassLogger();
         }
 
-        public void Download()
+        public string Download()
         {
+            throw new NotImplementedException();
 
+            //TODO port bits from elsewhere, need to handle long filenames and the other thing
+
+            //TODO will return result path
         }
     }
 
