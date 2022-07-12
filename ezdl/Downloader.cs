@@ -111,7 +111,7 @@ namespace ezdl
             }
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
-            Utils.RemuxAndCopy(dlpResultPath, finalFilePath, true, tags);
+            RemuxAndCopy(dlpResultPath, finalFilePath, true, tags);
 
             return finalFilePath;
         }
@@ -165,7 +165,7 @@ namespace ezdl
             p.WaitForExit();
         }
 
-        private RetrievedMetadata GetMetadataImgur(string id)
+        private static RetrievedMetadata GetMetadataImgur(string id)
         {
             string metadataString = DownloadMetadataImgur($"https://imgur.com/gallery/{id}");
             if (metadataString == null)
@@ -206,7 +206,7 @@ namespace ezdl
             };
         }
 
-        private string DownloadMetadataImgur(string url) //TODO args
+        private static string DownloadMetadataImgur(string url) //TODO args
         {
             string htmlData = null;
 
@@ -239,12 +239,63 @@ namespace ezdl
             return metadataString;
         }
 
-        private string GetCleanTitle(string title)
+        private static string GetCleanTitle(string title)
         {
             var cleanTitle = string.Join("_", title.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
             if (cleanTitle.Length > 128)
                 cleanTitle = cleanTitle.Substring(0, 128);
             return cleanTitle;
+        }
+
+        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, IDictionary<string, string> tags)
+        {
+            for (int i = 1; File.Exists(destination); i++)
+            {
+                destination = Path.Combine(Path.GetDirectoryName(destination), Path.GetFileNameWithoutExtension(destination) + $" ({i})" + Path.GetExtension(destination));
+            }
+
+            source = Path.GetFullPath(source);
+            destination = Path.GetFullPath(destination);
+
+            string tagString = string.Join(" ", tags.Select(t => $"-metadata {t.Key}=\"{t.Value.Replace("\"", "\\\"")}\""));
+
+            using (Process p = new Process())
+            {
+                p.StartInfo.FileName = "ffmpeg";
+                p.StartInfo.WorkingDirectory = Path.GetDirectoryName(source);
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.CreateNoWindow = true;
+                //p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.Arguments = $"-i \"{source}\" -c:v copy -c:a copy -c:s copy -map 0 {tagString} \"{destination}\"";
+
+                p.Start();
+
+                p.WaitForExit(30000);
+
+                if (!p.HasExited)
+                {
+                    throw new Exception("ffmpeg took too long");
+                }
+            }
+
+            Thread.Sleep(100); //make sure FS changes are committed
+
+            if (!File.Exists(destination))
+            {
+                throw new FileNotFoundException("ffmpeg failed to create file");
+            }
+
+            var modifiedDate = File.GetLastWriteTime(source);
+            File.SetLastWriteTime(destination, modifiedDate);
+
+            if (!keepOriginal)
+            {
+                File.Delete(source);
+            }
+
+            Thread.Sleep(100); //make sure FS changes are committed
+
+            return destination;
         }
 
         private class RetrievedMetadata

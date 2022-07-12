@@ -73,6 +73,17 @@ namespace ezdl
                 }
             }
 
+            OutputFormat outputFormat = OutputFormat.Mkv;
+            int ofmtArgIdx = Array.IndexOf(args, "-ofmt");
+            if (ofmtArgIdx >= 0)
+            {
+                string ofmtString = args[ofmtArgIdx + 1];
+                if (ofmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
+                {
+                    outputFormat = OutputFormat.Mp4;
+                }
+            }
+
             //ugly way of trying paths for cookies
             string cookiesPath = null;
             string tCookiesPath = Path.Combine(currentPath, "cookies.txt");
@@ -145,7 +156,7 @@ namespace ezdl
                 Uri = uri,
                 OutputFolder = currentPath,
                 TempFolder = tempPath,
-                OutputFormat = OutputFormat.Mkv,
+                OutputFormat = outputFormat,
                 MaxResolution = resolution,
                 PreferredFormat = preferredFormat,
                 Site = site,
