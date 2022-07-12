@@ -10,16 +10,29 @@ namespace ezdl
     {
         static void Main(string[] args)
         {
+            try
+            {
+                DownloadVideo(args);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Fatal error {e.GetType().Name}: {e.Message}");
+            }
+        }
+
+        private static void DownloadVideo(string[] args)
+        {
             //no config file (yet) but grab app folder to configure log
             string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ezdl");
 
-            if(!Directory.Exists(dataPath))
+            if (!Directory.Exists(dataPath))
             {
                 Directory.CreateDirectory(dataPath);
             }
 
             string logFilePath = Path.Combine(dataPath, "ezdl.log");
-            NLog.LogManager.Setup().LoadConfiguration(builder => {
+            NLog.LogManager.Setup().LoadConfiguration(builder =>
+            {
                 builder.ForLogger().FilterMinLevel(LogLevel.Info).WriteToConsole(layout: Layout.FromString("${message}"));
                 builder.ForLogger().FilterMinLevel(LogLevel.Debug).WriteToFile(fileName: logFilePath, archiveAboveSize: 1048576, maxArchiveFiles: 10);
             });
@@ -32,18 +45,18 @@ namespace ezdl
 
             logger.Info($"ezdl started in {currentPath} with args {string.Join(',', args)}");
 
-            if(Directory.Exists(tempPath))
+            if (Directory.Exists(tempPath))
             {
                 Directory.Delete(tempPath, true);
-                Directory.CreateDirectory(tempPath);
-            }            
+            }
+            Directory.CreateDirectory(tempPath);
 
             //parse args
             int resolution = 1080;
             PreferredFormat preferredFormat = PreferredFormat.WebmVp9;
 
             int resArgIdx = Array.IndexOf(args, "-res");
-            if(resArgIdx >= 0)
+            if (resArgIdx >= 0)
             {
                 resolution = int.Parse(args[resArgIdx + 1]);
             }
@@ -54,7 +67,7 @@ namespace ezdl
             if (fmtArgIdx >= 0)
             {
                 string fmtString = args[fmtArgIdx + 1];
-                if(fmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
+                if (fmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
                 {
                     preferredFormat = PreferredFormat.Mp4H264;
                 }
@@ -63,7 +76,7 @@ namespace ezdl
             //ugly way of trying paths for cookies
             string cookiesPath = null;
             string tCookiesPath = Path.Combine(currentPath, "cookies.txt");
-            if(File.Exists(tCookiesPath))
+            if (File.Exists(tCookiesPath))
             {
                 cookiesPath = tCookiesPath;
             }
@@ -84,7 +97,7 @@ namespace ezdl
                 }
             }
 
-            if(cookiesPath != null)
+            if (cookiesPath != null)
             {
                 cookiesPath = Path.GetFullPath(cookiesPath);
                 logger.Info("using cookies file: " + cookiesPath);
@@ -97,13 +110,13 @@ namespace ezdl
 
             string id = null;
             Site site = Site.Unknown;
-            if(uri.Host.Contains("youtube", StringComparison.OrdinalIgnoreCase) || uri.Host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase))
+            if (uri.Host.Contains("youtube", StringComparison.OrdinalIgnoreCase) || uri.Host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.YouTube;
                 var qs = HttpUtility.ParseQueryString(uri.Query);
                 id = qs["v"];
             }
-            else if(uri.Host.Contains("twitter", StringComparison.OrdinalIgnoreCase))
+            else if (uri.Host.Contains("twitter", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.Twitter;
                 var statusSegmentIdx = Array.IndexOf(uri.Segments, "status/");
@@ -112,12 +125,12 @@ namespace ezdl
             else if (uri.Host.Contains("imgur", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.Imgur;
-                if(uri.Segments.Length > 0)
+                if (uri.Segments.Length > 0)
                 {
                     id = uri.Segments[uri.Segments.Length - 1];
                 }
             }
-            else if(uri.Host.Contains("reddit", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith("redd.it", StringComparison.OrdinalIgnoreCase))
+            else if (uri.Host.Contains("reddit", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith("redd.it", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.Reddit;
             }
@@ -138,10 +151,34 @@ namespace ezdl
                 Site = site,
                 Id = id
             });
-            string finalPath = downloader.Download();
+
+            string finalPath = null;
+            try
+            {
+                finalPath = downloader.Download();
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Failed to download ({e.GetType().Name}:{e.Message})");
+            }
+
+            if (!string.IsNullOrEmpty(finalPath))
+            {
+                logger.Info($"Downloaded {urlString} to {finalPath}");
+            }
+            else
+            {
+                logger.Error($"Did not download any file");
+            }
+
+            /*
+            if (Directory.Exists(tempPath))
+            {
+                Directory.Delete(tempPath, true);
+            }
+            */
 
             logger.Info("ezdl done!");
         }
-        
     }
 }
