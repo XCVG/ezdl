@@ -20,6 +20,7 @@ namespace ezdl
         DownloaderConfig Config;
 
         private ILogger Logger;
+        private string TempFileName;
 
         public Downloader(DownloaderConfig config)
         {
@@ -36,8 +37,8 @@ namespace ezdl
             }
 
             string url = Config.Url;            
-            string tempFileName = Guid.NewGuid().ToString();
-            string tempFilePath = Path.Combine(Config.TempFolder, tempFileName);
+            TempFileName = Guid.NewGuid().ToString();
+            string tempFilePath = Path.Combine(Config.TempFolder, TempFileName);
 
             string argumentsTemplate = ArgumentTemplates.Default;
             Dictionary<string, string> arguments = new Dictionary<string, string>();
@@ -118,10 +119,6 @@ namespace ezdl
             Logger.Info($"Setting tags and copying to {finalFilePath}");
             RemuxAndCopy(dlpResultPath, finalFilePath, true, tags);
 
-            //TODO save tempfilename as instance variable, make ClearTempFolder public, and call from outside
-            Logger.Info($"Clearing temp folder");
-            ClearTempFolder(tempFileName);
-
             return finalFilePath;
         }
 
@@ -174,16 +171,23 @@ namespace ezdl
             p.WaitForExit();
         }
 
-        private void ClearTempFolder(string baseFileName)
+        public void ClearTempFolder()
         {
+            if (string.IsNullOrEmpty(TempFileName))
+                return;
+
+            Logger.Info("Cleaning temp files");
+
             var files = Directory.EnumerateFiles(Config.TempFolder);
             foreach(var file in files)
             {
-                if(Path.GetFileName(file).StartsWith(baseFileName, StringComparison.Ordinal))
+                if(Path.GetFileName(file).StartsWith(TempFileName, StringComparison.Ordinal))
                 {
                     File.Delete(file);
                 }
             }
+
+            Logger.Info("Cleaned temp files");
         }
 
         private static RetrievedMetadata GetMetadataImgur(string id)

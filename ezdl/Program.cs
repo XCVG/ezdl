@@ -178,6 +178,8 @@ namespace ezdl
                 logger.Error($"Did not download any file");
             }
 
+            downloader.ClearTempFolder();
+
             logger.Info("ezdl done!");
         }
     }
