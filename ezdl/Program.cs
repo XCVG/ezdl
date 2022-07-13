@@ -45,10 +45,6 @@ namespace ezdl
 
             logger.Info($"ezdl started in {currentPath} with args {string.Join(',', args)}");
 
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
             Directory.CreateDirectory(tempPath);
 
             //parse args
@@ -181,13 +177,6 @@ namespace ezdl
             {
                 logger.Error($"Did not download any file");
             }
-
-            /*
-            if (Directory.Exists(tempPath))
-            {
-                Directory.Delete(tempPath, true);
-            }
-            */
 
             logger.Info("ezdl done!");
         }

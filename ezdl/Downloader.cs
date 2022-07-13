@@ -87,9 +87,14 @@ namespace ezdl
             Dictionary<string, string> tags = new Dictionary<string, string>();
             if(Config.Site == Site.Imgur)
             {
-                var imgurMetadata = GetMetadataImgur(id);
+                var imgurMetadata = GetMetadataImgur(Config.Id);
+                
                 title = imgurMetadata.Title;
                 tags = imgurMetadata.Tags;
+
+                tags.Add("IMGUR_DL_ID", id);
+
+                id = Config.Id;
             }
             else
             {
@@ -112,6 +117,10 @@ namespace ezdl
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
             RemuxAndCopy(dlpResultPath, finalFilePath, true, tags);
+
+            //TODO save tempfilename as instance variable, make ClearTempFolder public, and call from outside
+            Logger.Info($"Clearing temp folder");
+            ClearTempFolder(tempFileName);
 
             return finalFilePath;
         }
@@ -163,6 +172,18 @@ namespace ezdl
             p.BeginErrorReadLine();
 
             p.WaitForExit();
+        }
+
+        private void ClearTempFolder(string baseFileName)
+        {
+            var files = Directory.EnumerateFiles(Config.TempFolder);
+            foreach(var file in files)
+            {
+                if(Path.GetFileName(file).StartsWith(baseFileName, StringComparison.Ordinal))
+                {
+                    File.Delete(file);
+                }
+            }
         }
 
         private static RetrievedMetadata GetMetadataImgur(string id)
