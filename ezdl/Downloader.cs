@@ -104,6 +104,7 @@ namespace ezdl
             }
 
             tags.Add("EZDL_RETRIEVAL_DATE", dlTime.ToString("O", CultureInfo.InvariantCulture));
+            tags.Add("EZDL_ORIGINAL_URL", Config.Url);
 
             Logger.Info($"Title: {title}");
             string safeTitle = GetCleanTitle(title);
@@ -286,14 +287,32 @@ namespace ezdl
 
             using (Process p = new Process())
             {
+                var pLogger = NLog.LogManager.GetLogger("ffmpeg");
+
                 p.StartInfo.FileName = "ffmpeg";
                 p.StartInfo.WorkingDirectory = Path.GetDirectoryName(source);
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.CreateNoWindow = true;
                 //p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.Arguments = $"-i \"{source}\" -c:v copy -c:a copy -c:s copy -map 0 {tagString} \"{destination}\"";
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.RedirectStandardOutput = true;
+
+                p.OutputDataReceived += new DataReceivedEventHandler((s, e) =>
+                {
+                    pLogger.Info(e.Data);
+                }
+                );
+                p.ErrorDataReceived += new DataReceivedEventHandler((s, e) =>
+                {
+                    pLogger.Error(e.Data);
+                }
+                );
 
                 p.Start();
+
+                p.BeginOutputReadLine();
+                p.BeginErrorReadLine();
 
                 p.WaitForExit(30000);
 
