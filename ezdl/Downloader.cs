@@ -63,7 +63,7 @@ namespace ezdl
 
             Thread.Sleep(100); //anti-glitching
 
-            string infoFilePath = tempFilePath + ".info.json";
+            string infoFilePath = Path.Combine(tempFilePath, "video.info.json");
             if (!File.Exists(infoFilePath))
             {
                 throw new FileNotFoundException("No infojson produced, download probably failed!");
@@ -73,7 +73,7 @@ namespace ezdl
             JObject infoObject = JObject.Parse(infoRaw);
 
             string dlpResultPath = infoObject["_filename"].ToString();
-            string id = "unknown", title = "unknown";
+            string id = "unknown", title = "unknown", thumbnailPath = "";
 
             if (infoObject["title"] != null && infoObject["title"].ToString() != null)
             {
@@ -83,6 +83,18 @@ namespace ezdl
             if (infoObject["id"] != null && infoObject["id"].ToString() != null)
             {
                 id = infoObject["id"].ToString();
+            }
+
+            if (infoObject["thumbnail"] != null && infoObject["thumbnail"].ToString() != null && Directory.Exists(tempFilePath))
+            {
+                var files = Directory.EnumerateFiles(tempFilePath);
+                foreach(var file in files)
+                {
+                    if(Path.GetFileNameWithoutExtension(file).Equals("thumbnail", StringComparison.OrdinalIgnoreCase))
+                    {
+                        thumbnailPath = Path.GetFullPath(file);
+                    }
+                }
             }
 
             Dictionary<string, string> tags = new Dictionary<string, string>();
@@ -118,7 +130,7 @@ namespace ezdl
             }
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
-            RemuxAndCopy(dlpResultPath, finalFilePath, true, tags);
+            RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, tags);
 
             return finalFilePath;
         }
@@ -185,6 +197,15 @@ namespace ezdl
                 if(Path.GetFileName(file).StartsWith(TempFileName, StringComparison.Ordinal))
                 {
                     File.Delete(file);
+                }
+            }
+
+            var folders = Directory.EnumerateDirectories(Config.TempFolder);
+            foreach(var folder in folders)
+            {
+                if(folder.EndsWith(TempFileName, StringComparison.Ordinal))
+                {
+                    Directory.Delete(folder, true);
                 }
             }
 
@@ -273,7 +294,7 @@ namespace ezdl
             return cleanTitle;
         }
 
-        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, IDictionary<string, string> tags)
+        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, string thumbnailPath, IDictionary<string, string> tags)
         {
             for (int i = 1; File.Exists(destination); i++)
             {
@@ -285,6 +306,14 @@ namespace ezdl
 
             string tagString = string.Join(" ", tags.Select(t => $"-metadata {t.Key}=\"{t.Value.Replace("\"", "\\\"")}\""));
 
+            string attachString = string.Empty;
+            if (!string.IsNullOrEmpty(thumbnailPath) && File.Exists(thumbnailPath))
+            {
+                string extension = Path.GetExtension(thumbnailPath);
+                string mimeType = MimeTypes.GetMimeType(Path.GetFileName(thumbnailPath));
+                attachString = $"-attach \"{thumbnailPath}\" -metadata:s:t mimetype={mimeType} -metadata:s:t filename=cover{extension}";
+            }
+
             using (Process p = new Process())
             {
                 var pLogger = NLog.LogManager.GetLogger("ffmpeg");
@@ -293,8 +322,7 @@ namespace ezdl
                 p.StartInfo.WorkingDirectory = Path.GetDirectoryName(source);
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.CreateNoWindow = true;
-                //p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.Arguments = $"-i \"{source}\" -c:v copy -c:a copy -c:s copy -map 0 {tagString} \"{destination}\"";
+                p.StartInfo.Arguments = $"-i \"{source}\" -c copy -map 0 {tagString} {attachString} \"{destination}\"";
                 p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.RedirectStandardOutput = true;
 
