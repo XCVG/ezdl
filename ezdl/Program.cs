@@ -54,7 +54,11 @@ namespace ezdl
             int resArgIdx = Array.IndexOf(args, "-res");
             if (resArgIdx >= 0)
             {
-                resolution = int.Parse(args[resArgIdx + 1]);
+                string resStr = args[resArgIdx + 1];
+                if (resStr.Equals("max", StringComparison.OrdinalIgnoreCase))
+                    resolution = -1;
+                else
+                    resolution = int.Parse(resStr);
             }
 
             logger.Info("max resolution: " + resolution);
@@ -78,6 +82,24 @@ namespace ezdl
                 {
                     outputFormat = OutputFormat.Mp4;
                 }
+            }
+
+            bool copyInfoJson = false;
+            int copyInfoIdx = Array.IndexOf(args, "-info");
+            if(copyInfoIdx >= 0)
+            {
+                copyInfoJson = true;
+            }
+
+            CommentsHandling commentsHandling = CommentsHandling.None;
+            int commentsArgIdx = Array.IndexOf(args, "-comments");
+            if (commentsArgIdx >= 0)
+            {
+                string commentsString = args[commentsArgIdx + 1];
+                if (commentsString.Equals("all", StringComparison.OrdinalIgnoreCase))
+                    commentsHandling = CommentsHandling.All;
+                else
+                    commentsHandling = CommentsHandling.Limited; //just specifying "comments" defaults to limited
             }
 
             //ugly way of trying paths for cookies
@@ -155,6 +177,8 @@ namespace ezdl
                 OutputFormat = outputFormat,
                 MaxResolution = resolution,
                 PreferredFormat = preferredFormat,
+                Comments = commentsHandling,
+                CopyInfo = copyInfoJson,
                 Site = site,
                 Id = id
             });

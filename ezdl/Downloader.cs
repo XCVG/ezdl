@@ -42,17 +42,34 @@ namespace ezdl
 
             string argumentsTemplate = ArgumentTemplates.Default;
             Dictionary<string, string> arguments = new Dictionary<string, string>();
+            bool copyInfoJson = Config.CopyInfo;
 
             if(Config.Site == Site.YouTube)
             {
                 argumentsTemplate = ArgumentTemplates.YouTube;
-                if(Config.PreferredFormat == PreferredFormat.Mp4H264)
+                string resStr = Config.MaxResolution >= 0 ? $"[height<={Config.MaxResolution}]" : "";
+                if (Config.PreferredFormat == PreferredFormat.Mp4H264)
                 {
-                    arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatMp4, new { Height = $"[height<={Config.MaxResolution}]" });
+                    arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatMp4, new { Height = resStr });
                 }
                 else
                 {
-                    arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatWebm, new { Height = $"[height<={Config.MaxResolution}]" });
+                    arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatWebm, new { Height = resStr });
+                }
+
+                if(Config.Comments == CommentsHandling.Limited)
+                {
+                    arguments["Comments"] = ArgumentTemplates.YoutubeCommentsLimited;
+                    copyInfoJson = true;
+                }
+                else if (Config.Comments == CommentsHandling.All)
+                {
+                    arguments["Comments"] = ArgumentTemplates.YoutubeCommentsAll;
+                    copyInfoJson = true;
+                }
+                else
+                {
+                    arguments["Comments"] = "";
                 }
             }
 
@@ -131,6 +148,13 @@ namespace ezdl
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
             RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, tags);
+
+            if(copyInfoJson)
+            {
+                string finalJsonPath = Path.Combine(Path.GetDirectoryName(finalFilePath), Path.GetFileNameWithoutExtension(finalFilePath) + ".json");
+                Logger.Info($"Copying info JSON to {finalJsonPath}");
+                File.Copy(infoFilePath, finalJsonPath);
+            }
 
             return finalFilePath;
         }

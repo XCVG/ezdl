@@ -14,6 +14,8 @@ namespace ezdl
         public string CookiesFile { get; set; } = null;
         public PreferredFormat PreferredFormat { get; set; }
         public OutputFormat OutputFormat { get; set; }
+        public CommentsHandling Comments { get; set; }
+        public bool CopyInfo { get; set; }
 
         public string Url { get; set; }
         public Uri Uri { get; set; }
@@ -34,5 +36,10 @@ namespace ezdl
     public enum OutputFormat
     {
         Unspecified, AsInput, Mkv, Mp4
+    }
+
+    public enum CommentsHandling
+    {
+        None, All, Limited
     }
 }
