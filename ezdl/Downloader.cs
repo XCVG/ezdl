@@ -156,6 +156,13 @@ namespace ezdl
                 File.Copy(infoFilePath, finalJsonPath);
             }
 
+            if(Config.CopyThumbnail && !string.IsNullOrEmpty(thumbnailPath))
+            {
+                string finalThumbPath = Path.Combine(Path.GetDirectoryName(finalFilePath), Path.GetFileNameWithoutExtension(finalFilePath) + Path.GetExtension(thumbnailPath));
+                Logger.Info($"Copying thumbnail to {finalThumbPath}");
+                File.Copy(thumbnailPath, finalThumbPath);
+            }
+
             return finalFilePath;
         }
 

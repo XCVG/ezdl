@@ -91,6 +91,13 @@ namespace ezdl
                 copyInfoJson = true;
             }
 
+            bool copyThumbnail = false;
+            int copyThumbIdx = Array.IndexOf(args, "-thumb");
+            if (copyThumbIdx >= 0)
+            {
+                copyThumbnail = true;
+            }
+
             CommentsHandling commentsHandling = CommentsHandling.None;
             int commentsArgIdx = Array.IndexOf(args, "-comments");
             if (commentsArgIdx >= 0)
@@ -179,6 +186,7 @@ namespace ezdl
                 PreferredFormat = preferredFormat,
                 Comments = commentsHandling,
                 CopyInfo = copyInfoJson,
+                CopyThumbnail = copyThumbnail,
                 Site = site,
                 Id = id
             });
