@@ -71,6 +71,10 @@ namespace ezdl
                 {
                     preferredFormat = PreferredFormat.Mp4H264;
                 }
+                else if (fmtString.Equals("any", StringComparison.OrdinalIgnoreCase))
+                {
+                    preferredFormat = PreferredFormat.Unspecified;
+                }
             }
 
             OutputFormat outputFormat = OutputFormat.Mkv;

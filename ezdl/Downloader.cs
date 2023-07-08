@@ -52,9 +52,13 @@ namespace ezdl
                 {
                     arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatMp4, new { Height = resStr });
                 }
-                else
+                else if (Config.PreferredFormat == PreferredFormat.WebmVp9)
                 {
                     arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatWebm, new { Height = resStr });
+                }
+                else
+                {
+                    arguments["Format"] = Smart.Format(ArgumentTemplates.YoutubeFormatAny, new { Height = resStr });
                 }
 
                 if(Config.Comments == CommentsHandling.Limited)
