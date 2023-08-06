@@ -113,6 +113,13 @@ namespace ezdl
                     commentsHandling = CommentsHandling.Limited; //just specifying "comments" defaults to limited
             }
 
+            bool useAltExe = false;
+            int useAltExeIdx = Array.IndexOf(args, "-wo");
+            if (useAltExeIdx >= 0)
+            {
+                useAltExe = true;
+            }
+
             //ugly way of trying paths for cookies
             string cookiesPath = null;
             string tCookiesPath = Path.Combine(currentPath, "cookies.txt");
@@ -178,7 +185,7 @@ namespace ezdl
             logger.Info("Site: " + site);
             logger.Info("ID: " + (id == null ? "unknown" : id));
 
-            var downloader = new Downloader(new DownloaderConfig()
+            var downloaderConfig = new DownloaderConfig()
             {
                 CookiesFile = cookiesPath,
                 Url = urlString,
@@ -192,8 +199,10 @@ namespace ezdl
                 CopyInfo = copyInfoJson,
                 CopyThumbnail = copyThumbnail,
                 Site = site,
-                Id = id
-            });
+                Id = id,
+                DownloaderExe = useAltExe ? "yt-dlp-wo" : null
+            };
+            var downloader = new Downloader(downloaderConfig);
 
             string finalPath = null;
             try

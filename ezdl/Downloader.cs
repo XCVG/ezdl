@@ -193,7 +193,7 @@ namespace ezdl
             var pLogger = NLog.LogManager.GetLogger("yt-dlp");
 
             Process p = new Process();
-            p.StartInfo.FileName = "yt-dlp";
+            p.StartInfo.FileName = string.IsNullOrEmpty(Config.DownloaderExe) ? "yt-dlp" : Config.DownloaderExe;
             p.StartInfo.Arguments = argumentsString;
             p.StartInfo.CreateNoWindow = false;
             p.StartInfo.UseShellExecute = false;

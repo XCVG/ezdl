@@ -17,6 +17,7 @@ namespace ezdl
         public CommentsHandling Comments { get; set; }
         public bool CopyInfo { get; set; }
         public bool CopyThumbnail { get; set; }
+        public string DownloaderExe { get; set; }
 
         public string Url { get; set; }
         public Uri Uri { get; set; }
