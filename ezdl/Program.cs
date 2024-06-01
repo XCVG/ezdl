@@ -163,7 +163,7 @@ namespace ezdl
                 var qs = HttpUtility.ParseQueryString(uri.Query);
                 id = qs["v"];
             }
-            else if (uri.Host.Contains("twitter", StringComparison.OrdinalIgnoreCase))
+            else if (uri.Host.Contains("twitter", StringComparison.OrdinalIgnoreCase) || uri.Host.StartsWith("x.", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.Twitter;
                 var statusSegmentIdx = Array.IndexOf(uri.Segments, "status/");
