@@ -49,7 +49,7 @@ namespace ezdl
 
             //parse args
             int resolution = 1080;
-            PreferredFormat preferredFormat = PreferredFormat.WebmVp9;
+            PreferredFormat preferredFormat = PreferredFormat.Unspecified;
 
             int resArgIdx = Array.IndexOf(args, "-res");
             if (resArgIdx >= 0)
@@ -70,6 +70,10 @@ namespace ezdl
                 if (fmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
                 {
                     preferredFormat = PreferredFormat.Mp4H264;
+                }
+                else if (fmtString.Equals("vp9", StringComparison.OrdinalIgnoreCase))
+                {
+                    preferredFormat = PreferredFormat.Unspecified;
                 }
                 else if (fmtString.Equals("any", StringComparison.OrdinalIgnoreCase))
                 {
