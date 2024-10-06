@@ -173,7 +173,7 @@ namespace ezdl
             }
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
-            RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, tags);
+            RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, Config.OutputFormat, tags);
 
             if(copyInfoJson && !string.IsNullOrEmpty(infoFilePath))
             {
@@ -351,7 +351,7 @@ namespace ezdl
             return cleanTitle;
         }
 
-        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, string thumbnailPath, IDictionary<string, string> tags)
+        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, string thumbnailPath, OutputFormat outputFormat, IDictionary<string, string> tags)
         {
             for (int i = 1; File.Exists(destination); i++)
             {
@@ -362,9 +362,10 @@ namespace ezdl
             destination = Path.GetFullPath(destination);
 
             string tagString = string.Join(" ", tags.Select(t => $"-metadata {t.Key}=\"{t.Value.Replace("\"", "\\\"")}\""));
-
+            string mapString = outputFormat == OutputFormat.Mp4 ? "" : "-map 0";
+            
             string attachString = string.Empty;
-            if (!string.IsNullOrEmpty(thumbnailPath) && File.Exists(thumbnailPath))
+            if (outputFormat != OutputFormat.Mp4 && !string.IsNullOrEmpty(thumbnailPath) && File.Exists(thumbnailPath))
             {
                 string extension = Path.GetExtension(thumbnailPath);
                 string mimeType = MimeTypes.GetMimeType(Path.GetFileName(thumbnailPath));
@@ -379,7 +380,7 @@ namespace ezdl
                 p.StartInfo.WorkingDirectory = Path.GetDirectoryName(source);
                 p.StartInfo.UseShellExecute = false;
                 p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.Arguments = $"-i \"{source}\" -c copy -map 0 {tagString} {attachString} \"{destination}\"";
+                p.StartInfo.Arguments = $"-i \"{source}\" -c copy {mapString} {tagString} {attachString} \"{destination}\"";
                 p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.RedirectStandardOutput = true;
 
@@ -409,7 +410,7 @@ namespace ezdl
 
             Thread.Sleep(100); //make sure FS changes are committed
 
-            if (!File.Exists(destination))
+            if (!File.Exists(destination) || GetFileSize(destination) == 0)
             {
                 throw new FileNotFoundException("ffmpeg failed to create file");
             }
@@ -425,6 +426,12 @@ namespace ezdl
             Thread.Sleep(100); //make sure FS changes are committed
 
             return destination;
+        }
+
+        private static long GetFileSize(string filePath)
+        {
+            var fi = new FileInfo(filePath);
+            return fi.Length;
         }
 
         private class RetrievedMetadata

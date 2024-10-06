@@ -49,8 +49,6 @@ namespace ezdl
 
             //parse args
             int resolution = 1080;
-            PreferredFormat preferredFormat = PreferredFormat.Unspecified;
-
             int resArgIdx = Array.IndexOf(args, "-res");
             if (resArgIdx >= 0)
             {
@@ -63,24 +61,6 @@ namespace ezdl
 
             logger.Info("max resolution: " + resolution);
 
-            int fmtArgIdx = Array.IndexOf(args, "-fmt");
-            if (fmtArgIdx >= 0)
-            {
-                string fmtString = args[fmtArgIdx + 1];
-                if (fmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
-                {
-                    preferredFormat = PreferredFormat.Mp4H264;
-                }
-                else if (fmtString.Equals("vp9", StringComparison.OrdinalIgnoreCase))
-                {
-                    preferredFormat = PreferredFormat.Unspecified;
-                }
-                else if (fmtString.Equals("any", StringComparison.OrdinalIgnoreCase))
-                {
-                    preferredFormat = PreferredFormat.Unspecified;
-                }
-            }
-
             OutputFormat outputFormat = OutputFormat.Mkv;
             int ofmtArgIdx = Array.IndexOf(args, "-ofmt");
             if (ofmtArgIdx >= 0)
@@ -91,6 +71,25 @@ namespace ezdl
                     outputFormat = OutputFormat.Mp4;
                 }
             }
+
+            PreferredFormat preferredFormat = outputFormat == OutputFormat.Mp4 ? PreferredFormat.Mp4H264 : PreferredFormat.Unspecified; //ofmt mp4 implies fmt mp4, but can be overriden
+            int fmtArgIdx = Array.IndexOf(args, "-fmt");
+            if (fmtArgIdx >= 0)
+            {
+                string fmtString = args[fmtArgIdx + 1];
+                if (fmtString.Equals("mp4", StringComparison.OrdinalIgnoreCase))
+                {
+                    preferredFormat = PreferredFormat.Mp4H264;
+                }
+                else if (fmtString.Equals("vp9", StringComparison.OrdinalIgnoreCase))
+                {
+                    preferredFormat = PreferredFormat.WebmVp9;
+                }
+                else if (fmtString.Equals("any", StringComparison.OrdinalIgnoreCase))
+                {
+                    preferredFormat = PreferredFormat.Unspecified;
+                }
+            }            
 
             bool copyInfoJson = false;
             int copyInfoIdx = Array.IndexOf(args, "-info");
