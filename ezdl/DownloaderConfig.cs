@@ -27,7 +27,7 @@ namespace ezdl
 
     public enum Site
     {
-        Unknown, YouTube, Imgur, Twitter, Reddit
+        Unknown, YouTube, Imgur, Twitter, Reddit, Facebook
     }
 
     public enum PreferredFormat

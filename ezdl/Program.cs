@@ -185,6 +185,10 @@ namespace ezdl
             {
                 site = Site.Reddit;
             }
+            else if (uri.Host.Contains("facebook", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.Facebook;
+            }
 
             logger.Info("Site: " + site);
             logger.Info("ID: " + (id == null ? "unknown" : id));

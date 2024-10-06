@@ -44,6 +44,11 @@ namespace ezdl
             Dictionary<string, string> arguments = new Dictionary<string, string>();
             bool copyInfoJson = Config.CopyInfo;
 
+            if(Config.Site == Site.Facebook)
+            {
+                argumentsTemplate = ArgumentTemplates.Facebook;
+            }
+
             if(Config.Site == Site.YouTube)
             {
                 argumentsTemplate = ArgumentTemplates.YouTube;
@@ -80,43 +85,60 @@ namespace ezdl
             Logger.Info($"Downloading from {Config.Url} to temp file {tempFilePath}");
 
             var dlTime = DateTime.UtcNow;
-            DownloadVideoInternal(url, argumentsTemplate, tempFilePath, arguments);            
+            DownloadVideoInternal(url, argumentsTemplate, tempFilePath, arguments);
 
             Thread.Sleep(100); //anti-glitching
 
-            string infoFilePath = Path.Combine(tempFilePath, "video.info.json");
-            if (!File.Exists(infoFilePath))
-            {
-                throw new FileNotFoundException("No infojson produced, download probably failed!");
-            }
-
-            string infoRaw = File.ReadAllText(infoFilePath);
-            JObject infoObject = JObject.Parse(infoRaw);
-
-            string dlpResultPath = infoObject["_filename"].ToString();
+            string infoFilePath = null;
             string id = "unknown", title = "unknown", thumbnailPath = "";
-
-            if (infoObject["title"] != null && infoObject["title"].ToString() != null)
+            string dlpResultPath;
+            if (Config.Site == Site.Facebook)
             {
-                title = infoObject["title"].ToString();
+                //hack: avoid infojson, get the file in the temp file path, parse its filename to get title and ID
+                string filePath = Directory.EnumerateFiles(tempFilePath).Single();
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+
+                title = fileName.Substring(0, fileName.IndexOf('[')).Trim();
+                id = fileName.Substring(fileName.LastIndexOf('[') + 1, fileName.LastIndexOf(']') - fileName.LastIndexOf('[') - 1);
+
+                dlpResultPath = filePath; 
             }
-
-            if (infoObject["id"] != null && infoObject["id"].ToString() != null)
+            else
             {
-                id = infoObject["id"].ToString();
-            }
-
-            if (infoObject["thumbnail"] != null && infoObject["thumbnail"].ToString() != null && Directory.Exists(tempFilePath))
-            {
-                var files = Directory.EnumerateFiles(tempFilePath);
-                foreach(var file in files)
+                infoFilePath = Path.Combine(tempFilePath, "video.info.json");
+                if (!File.Exists(infoFilePath))
                 {
-                    if(Path.GetFileNameWithoutExtension(file).Equals("thumbnail", StringComparison.OrdinalIgnoreCase))
+                    throw new FileNotFoundException("No infojson produced, download probably failed!");
+                }
+
+                string infoRaw = File.ReadAllText(infoFilePath);
+                JObject infoObject = JObject.Parse(infoRaw);
+
+                dlpResultPath = infoObject["_filename"].ToString();                
+
+                if (infoObject["title"] != null && infoObject["title"].ToString() != null)
+                {
+                    title = infoObject["title"].ToString();
+                }
+
+                if (infoObject["id"] != null && infoObject["id"].ToString() != null)
+                {
+                    id = infoObject["id"].ToString();
+                }
+
+                if (infoObject["thumbnail"] != null && infoObject["thumbnail"].ToString() != null && Directory.Exists(tempFilePath))
+                {
+                    var files = Directory.EnumerateFiles(tempFilePath);
+                    foreach (var file in files)
                     {
-                        thumbnailPath = Path.GetFullPath(file);
+                        if (Path.GetFileNameWithoutExtension(file).Equals("thumbnail", StringComparison.OrdinalIgnoreCase))
+                        {
+                            thumbnailPath = Path.GetFullPath(file);
+                        }
                     }
                 }
             }
+            
 
             Dictionary<string, string> tags = new Dictionary<string, string>();
             if(Config.Site == Site.Imgur)
@@ -153,7 +175,7 @@ namespace ezdl
             Logger.Info($"Setting tags and copying to {finalFilePath}");
             RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, tags);
 
-            if(copyInfoJson)
+            if(copyInfoJson && !string.IsNullOrEmpty(infoFilePath))
             {
                 string finalJsonPath = Path.Combine(Path.GetDirectoryName(finalFilePath), Path.GetFileNameWithoutExtension(finalFilePath) + ".json");
                 Logger.Info($"Copying info JSON to {finalJsonPath}");
