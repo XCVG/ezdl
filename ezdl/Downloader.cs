@@ -93,6 +93,10 @@ namespace ezdl
                 {
                     arguments["ExtractorArgs"] = string.Format(ArgumentTemplates.YoutubeExtractorArgs, string.Join(';', extractorArgs));
                 }
+                else
+                {
+                    arguments["ExtractorArgs"] = "";
+                }
             }
 
             Logger.Info($"Downloading from {Config.Url} to temp file {tempFilePath}");
