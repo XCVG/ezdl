@@ -153,6 +153,46 @@ namespace ezdl
                 logger.Info("using cookies file: " + cookiesPath);
             }
 
+            string poToken = null;
+            int poTokenIdx = Array.IndexOf(args, "-poToken");
+
+            if(poTokenIdx >= 0)
+            {
+                poToken = args[poTokenIdx + 1].Trim().Trim('\'', '"').Trim();
+            }
+            else
+            {
+                string poTokenPath = null;
+                string tPoTokenPath = Path.Combine(currentPath, "potoken.txt");
+                if (File.Exists(tPoTokenPath))
+                {
+                    poTokenPath = tPoTokenPath;
+                }
+                else
+                {
+                    tPoTokenPath = Path.Combine(dataPath, "potoken.txt");
+                    if (File.Exists(tPoTokenPath))
+                    {
+                        poTokenPath = tPoTokenPath;
+                    }
+                    else
+                    {
+                        tPoTokenPath = Path.Combine(applicationPath, "potoken.txt");
+                        if (File.Exists(tPoTokenPath))
+                        {
+                            poTokenPath = tPoTokenPath;
+                        }
+                    }
+                }
+
+                if (poTokenPath != null)
+                {
+                    poTokenPath = Path.GetFullPath(poTokenPath);
+                    logger.Info("using po toekn from file: " + poTokenPath);
+                    poToken = File.ReadAllText(poTokenPath);
+                }
+            }
+
             var urlString = args[args.Length - 1].Trim('\'', '"');
             var uri = new Uri(urlString);
 
@@ -195,6 +235,7 @@ namespace ezdl
             var downloaderConfig = new DownloaderConfig()
             {
                 CookiesFile = cookiesPath,
+                PoToken = poToken,
                 Url = urlString,
                 Uri = uri,
                 OutputFolder = currentPath,

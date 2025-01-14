@@ -52,6 +52,7 @@ namespace ezdl
             if(Config.Site == Site.YouTube)
             {
                 argumentsTemplate = ArgumentTemplates.YouTube;
+                List<string> extractorArgs = new List<string>();
                 string resStr = Config.MaxResolution >= 0 ? $"[height<={Config.MaxResolution}]" : "";
                 if (Config.PreferredFormat == PreferredFormat.Mp4H264)
                 {
@@ -68,17 +69,29 @@ namespace ezdl
 
                 if(Config.Comments == CommentsHandling.Limited)
                 {
-                    arguments["Comments"] = ArgumentTemplates.YoutubeCommentsLimited;
+                    arguments["Comments"] = "--write-comments";
+                    extractorArgs.Add(ArgumentTemplates.YoutubeCommentsLimited);
                     copyInfoJson = true;
                 }
                 else if (Config.Comments == CommentsHandling.All)
                 {
-                    arguments["Comments"] = ArgumentTemplates.YoutubeCommentsAll;
+                    arguments["Comments"] = "--write-comments";
+                    extractorArgs.Add(ArgumentTemplates.YoutubeCommentsAll);
                     copyInfoJson = true;
                 }
                 else
                 {
                     arguments["Comments"] = "";
+                }
+
+                if (!string.IsNullOrEmpty(Config.PoToken))
+                {
+                    extractorArgs.Add(string.Format(ArgumentTemplates.YoutubePoToken, Config.PoToken));
+                }
+
+                if (extractorArgs.Count > 0)
+                {
+                    arguments["ExtractorArgs"] = string.Format(ArgumentTemplates.YoutubeExtractorArgs, string.Join(';', extractorArgs));
                 }
             }
 
@@ -208,7 +221,7 @@ namespace ezdl
                 {
                     arguments[arg.Key] = arg.Value;
                 }
-            }            
+            }
 
             string argumentsString = Smart.Format(argumentsTemplate, arguments);
 

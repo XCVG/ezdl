@@ -12,6 +12,7 @@ namespace ezdl
         public string OutputFolder { get; set; }
         public string TempFolder { get; set; }
         public string CookiesFile { get; set; } = null;
+        public string PoToken { get; set; } = null;
         public PreferredFormat PreferredFormat { get; set; }
         public OutputFormat OutputFormat { get; set; }
         public CommentsHandling Comments { get; set; }
