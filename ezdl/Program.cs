@@ -123,6 +123,13 @@ namespace ezdl
                 useAltExe = true;
             }
 
+            bool useYtWorkaround = false;
+            int useYtWorkaroundIdx = Array.IndexOf(args, "-ytwo");
+            if (useYtWorkaroundIdx >= 0)
+            {
+                useYtWorkaround = true;
+            }
+
             //ugly way of trying paths for cookies
             string cookiesPath = null;
             string tCookiesPath = Path.Combine(currentPath, "cookies.txt");

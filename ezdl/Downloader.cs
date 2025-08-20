@@ -88,6 +88,10 @@ namespace ezdl
                 {
                     extractorArgs.Add(string.Format(ArgumentTemplates.YoutubePoToken, Config.PoToken));
                 }
+                else if(Config.UseYtWorkaround)
+                {
+                    extractorArgs.Add(ArgumentTemplates.YoutubeWorkaround);
+                }
 
                 if (extractorArgs.Count > 0)
                 {
