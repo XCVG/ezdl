@@ -255,7 +255,8 @@ namespace ezdl
                 CopyThumbnail = copyThumbnail,
                 Site = site,
                 Id = id,
-                DownloaderExe = useAltExe ? "yt-dlp-wo" : null
+                DownloaderExe = useAltExe ? "yt-dlp-wo" : null,
+                UseYtWorkaround = useYtWorkaround
             };
             var downloader = new Downloader(downloaderConfig);
 
