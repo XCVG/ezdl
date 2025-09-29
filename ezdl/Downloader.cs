@@ -194,13 +194,14 @@ namespace ezdl
             }
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
-            RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, Config.OutputFormat, tags);
+            string actualDestination = RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, Config.OutputFormat, tags);
 
             if(copyInfoJson && !string.IsNullOrEmpty(infoFilePath))
             {
                 string finalJsonPath = Path.Combine(Path.GetDirectoryName(finalFilePath), Path.GetFileNameWithoutExtension(finalFilePath) + ".json");
                 Logger.Info($"Copying info JSON to {finalJsonPath}");
                 File.Copy(infoFilePath, finalJsonPath);
+                File.SetLastWriteTime(finalJsonPath, File.GetLastWriteTime(actualDestination));
             }
 
             if(Config.CopyThumbnail && !string.IsNullOrEmpty(thumbnailPath))
@@ -208,6 +209,7 @@ namespace ezdl
                 string finalThumbPath = Path.Combine(Path.GetDirectoryName(finalFilePath), Path.GetFileNameWithoutExtension(finalFilePath) + Path.GetExtension(thumbnailPath));
                 Logger.Info($"Copying thumbnail to {finalThumbPath}");
                 File.Copy(thumbnailPath, finalThumbPath);
+                File.SetLastWriteTime(finalThumbPath, File.GetLastWriteTime(actualDestination));
             }
 
             return finalFilePath;
