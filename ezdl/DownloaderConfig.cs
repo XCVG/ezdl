@@ -13,7 +13,7 @@ namespace ezdl
         public string TempFolder { get; set; }
         public string CookiesFile { get; set; } = null;
         public string PoToken { get; set; } = null;
-        public bool UseYtWorkaround { get; set; } = false;
+        public bool UseWorkarounds { get; set; } = false;
         public PreferredFormat PreferredFormat { get; set; }
         public OutputFormat OutputFormat { get; set; }
         public CommentsHandling Comments { get; set; }
@@ -29,7 +29,7 @@ namespace ezdl
 
     public enum Site
     {
-        Unknown, YouTube, Imgur, Twitter, Reddit, Facebook
+        Unknown, YouTube, Imgur, Twitter, Reddit, Facebook, Instagram, TikTok
     }
 
     public enum PreferredFormat

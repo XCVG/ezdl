@@ -2,6 +2,8 @@
 using NLog.Layouts;
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace ezdl
@@ -123,11 +125,11 @@ namespace ezdl
                 useAltExe = true;
             }
 
-            bool useYtWorkaround = false;
-            int useYtWorkaroundIdx = Array.IndexOf(args, "-ytwo");
-            if (useYtWorkaroundIdx >= 0)
+            bool useWorkarounds = false;
+            int useWorkaroundsIdx = Array.IndexOf(args, "-workarounds");
+            if (useWorkaroundsIdx >= 0)
             {
-                useYtWorkaround = true;
+                useWorkarounds = true;
             }
 
             //ugly way of trying paths for cookies
@@ -201,17 +203,35 @@ namespace ezdl
             }
 
             var urlString = args[args.Length - 1].Trim('\'', '"');
-            var uri = new Uri(urlString);
+            Uri uri;
+
+            //unbreak URLs without scheme
+            if (!Regex.IsMatch(urlString, "^https?:\\/\\/", RegexOptions.IgnoreCase))
+                uri = new Uri("https://" + urlString); //https is a safer guess in 2025
+            else
+                uri = new Uri(urlString);
 
             logger.Info("URL: " + urlString);
 
             string id = null;
             Site site = Site.Unknown;
-            if (uri.Host.Contains("youtube", StringComparison.OrdinalIgnoreCase) || uri.Host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase))
+            if (uri.Host.Contains("youtube", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.YouTube;
-                var qs = HttpUtility.ParseQueryString(uri.Query);
-                id = qs["v"];
+                if(Array.Find(uri.Segments, s => s.Equals("shorts/", StringComparison.OrdinalIgnoreCase)) != null)
+                {
+                    id = uri.Segments.Last();
+                }
+                else
+                {
+                    var qs = HttpUtility.ParseQueryString(uri.Query);
+                    id = qs["v"];
+                }
+            }
+            else if(uri.Host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.YouTube;
+                id = uri.Segments.Last();
             }
             else if (uri.Host.Contains("twitter", StringComparison.OrdinalIgnoreCase) || uri.Host.StartsWith("x.", StringComparison.OrdinalIgnoreCase))
             {
@@ -234,6 +254,29 @@ namespace ezdl
             else if (uri.Host.Contains("facebook", StringComparison.OrdinalIgnoreCase))
             {
                 site = Site.Facebook;
+                int reelIndex = Array.FindIndex(uri.Segments, s => s.Equals("reel/", StringComparison.OrdinalIgnoreCase));
+                if(reelIndex >= 0 && uri.Segments.Length > reelIndex + 1)
+                {
+                    id = uri.Segments[reelIndex + 1];
+                }
+            }
+            else if (uri.Host.Contains("instagram", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.Instagram;
+                //afaict this is the same as facebook
+                int reelIndex = Array.FindIndex(uri.Segments, s => s.Equals("reel/", StringComparison.OrdinalIgnoreCase));
+                if (reelIndex >= 0 && uri.Segments.Length > reelIndex + 1)
+                {
+                    id = uri.Segments[reelIndex + 1];
+                }
+            }
+            else if (uri.Host.Contains("tiktok", StringComparison.OrdinalIgnoreCase))
+            {
+                site = Site.TikTok;
+                if (uri.Segments.Length > 0)
+                {
+                    id = uri.Segments[uri.Segments.Length - 1];
+                }
             }
 
             logger.Info("Site: " + site);
@@ -256,7 +299,7 @@ namespace ezdl
                 Site = site,
                 Id = id,
                 DownloaderExe = useAltExe ? "yt-dlp-wo" : null,
-                UseYtWorkaround = useYtWorkaround
+                UseWorkarounds = useWorkarounds
             };
             var downloader = new Downloader(downloaderConfig);
 

@@ -43,13 +43,14 @@ namespace ezdl
             string argumentsTemplate = ArgumentTemplates.Default;
             Dictionary<string, string> arguments = new Dictionary<string, string>();
             bool copyInfoJson = Config.CopyInfo;
+            bool useNoInfoJsonWorkaround = false;
 
-            if(Config.Site == Site.Facebook)
+            if((Config.Site == Site.Facebook || Config.Site == Site.Instagram) && Config.UseWorkarounds)
             {
-                argumentsTemplate = ArgumentTemplates.Facebook;
+                argumentsTemplate = ArgumentTemplates.FacebookWorkaround;
+                useNoInfoJsonWorkaround = true;
             }
-
-            if(Config.Site == Site.YouTube)
+            else if(Config.Site == Site.YouTube)
             {
                 argumentsTemplate = ArgumentTemplates.YouTube;
                 List<string> extractorArgs = new List<string>();
@@ -88,7 +89,7 @@ namespace ezdl
                 {
                     extractorArgs.Add(string.Format(ArgumentTemplates.YoutubePoToken, Config.PoToken));
                 }
-                else if(Config.UseYtWorkaround)
+                else if(Config.UseWorkarounds)
                 {
                     extractorArgs.Add(ArgumentTemplates.YoutubeWorkaround);
                 }
@@ -113,9 +114,10 @@ namespace ezdl
             string infoFilePath = null;
             string id = "unknown", title = "unknown", thumbnailPath = "";
             string dlpResultPath;
-            if (Config.Site == Site.Facebook)
+            if (useNoInfoJsonWorkaround)
             {
                 //hack: avoid infojson, get the file in the temp file path, parse its filename to get title and ID
+                //this is probably no longer needed but leaving the codepath in for now
                 string filePath = Directory.EnumerateFiles(tempFilePath).Single();
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
 
