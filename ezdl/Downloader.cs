@@ -196,7 +196,7 @@ namespace ezdl
             }
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
-            string actualDestination = RemuxAndCopy(dlpResultPath, finalFilePath, true, thumbnailPath, Config.OutputFormat, tags);
+            string actualDestination = RemuxAndCopy(dlpResultPath, finalFilePath, true, Config.NoTimeout, thumbnailPath, Config.OutputFormat, tags);
 
             if(copyInfoJson && !string.IsNullOrEmpty(infoFilePath))
             {
@@ -376,7 +376,7 @@ namespace ezdl
             return cleanTitle;
         }
 
-        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, string thumbnailPath, OutputFormat outputFormat, IDictionary<string, string> tags)
+        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, bool noTimeout, string thumbnailPath, OutputFormat outputFormat, IDictionary<string, string> tags)
         {
             for (int i = 1; File.Exists(destination); i++)
             {
@@ -425,7 +425,10 @@ namespace ezdl
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
 
-                p.WaitForExit(30000);
+                if (noTimeout)
+                    p.WaitForExit();
+                else
+                    p.WaitForExit(30000);
 
                 if (!p.HasExited)
                 {

@@ -132,6 +132,8 @@ namespace ezdl
                 useWorkarounds = true;
             }
 
+            bool noTimeout = Array.IndexOf(args, "-notimeout") >= 0;
+
             //ugly way of trying paths for cookies
             string cookiesPath = null;
             string tCookiesPath = Path.Combine(currentPath, "cookies.txt");
@@ -299,7 +301,8 @@ namespace ezdl
                 Site = site,
                 Id = id,
                 DownloaderExe = useAltExe ? "yt-dlp-wo" : null,
-                UseWorkarounds = useWorkarounds
+                UseWorkarounds = useWorkarounds,
+                NoTimeout = noTimeout
             };
             var downloader = new Downloader(downloaderConfig);
 
