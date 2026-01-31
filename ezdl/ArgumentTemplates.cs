@@ -20,7 +20,7 @@ namespace ezdl
 
         public static readonly string YoutubeExtractorArgs = "--extractor-args \"youtube:{0}\"";
         public static readonly string YoutubeCommentsAll = "max_comments=all,all,all,all;comment_sort=top";
-        public static readonly string YoutubeCommentsLimited = "max_comments=2000,100,all,100;comment_sort=top";
+        public static readonly string YoutubeCommentsLimited = "max_comments=1000,100,all,100;comment_sort=top";
         public static readonly string YoutubePoToken = "player-client=web,default;po_token=web+{0}";
         public static readonly string YoutubeWorkaround = "player-client=web_embedded,web,tv";
     }
