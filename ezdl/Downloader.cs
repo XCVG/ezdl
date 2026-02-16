@@ -114,6 +114,7 @@ namespace ezdl
             string infoFilePath = null;
             string id = "unknown", title = "unknown", thumbnailPath = "";
             string dlpResultPath;
+            DateTime? altModifiedDate = null;
             if (useNoInfoJsonWorkaround)
             {
                 //hack: avoid infojson, get the file in the temp file path, parse its filename to get title and ID
@@ -160,6 +161,11 @@ namespace ezdl
                         }
                     }
                 }
+
+                if (infoObject["upload_date"] != null && DateTime.TryParseExact(infoObject["upload_date"].ToString(), "yyyyMMdd", null, DateTimeStyles.None, out var uDate))
+                {
+                    altModifiedDate = uDate;
+                }
             }
             
 
@@ -196,7 +202,7 @@ namespace ezdl
             }
 
             Logger.Info($"Setting tags and copying to {finalFilePath}");
-            string actualDestination = RemuxAndCopy(dlpResultPath, finalFilePath, true, Config.NoTimeout, thumbnailPath, Config.OutputFormat, tags);
+            string actualDestination = RemuxAndCopy(dlpResultPath, finalFilePath, true, Config.NoTimeout, thumbnailPath, Config.OutputFormat, altModifiedDate, tags);
 
             if(copyInfoJson && !string.IsNullOrEmpty(infoFilePath))
             {
@@ -376,7 +382,7 @@ namespace ezdl
             return cleanTitle;
         }
 
-        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, bool noTimeout, string thumbnailPath, OutputFormat outputFormat, IDictionary<string, string> tags)
+        private static string RemuxAndCopy(string source, string destination, bool keepOriginal, bool noTimeout, string thumbnailPath, OutputFormat outputFormat, DateTime? altModifiedDate, IDictionary<string, string> tags)
         {
             for (int i = 1; File.Exists(destination); i++)
             {
@@ -444,7 +450,7 @@ namespace ezdl
             }
 
             var modifiedDate = File.GetLastWriteTime(source);
-            File.SetLastWriteTime(destination, modifiedDate);
+            File.SetLastWriteTime(destination, altModifiedDate ?? modifiedDate);
 
             if (!keepOriginal)
             {
